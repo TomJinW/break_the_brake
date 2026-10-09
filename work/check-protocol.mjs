@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {usbReport,usbInput,hasUsbOutput,LatestWriter} from '../outputs/trigger-lab/protocol.mjs';
+const on=usbReport({active:true,start:.35,strength:.35});
+assert.equal(on.length,47);assert.equal(on[0],4);assert.equal(on[10],1);assert.equal(on[11],89);assert.equal(on[12],89);
+assert.equal(usbReport({active:true,strength:20})[12],255);
+const off=usbReport();assert.equal(off[10],0);assert.equal(off[0],4);
+assert.equal(usbInput(1,new DataView(Uint8Array.from({length:63},(_,i)=>i===5?255:0).buffer)),1);
+assert.equal(usbInput(1,new DataView(new ArrayBuffer(9))),null);
+assert.equal(usbInput(0x31,new DataView(new ArrayBuffer(77))),null);
+assert.equal(hasUsbOutput([{children:[{outputReports:[{reportId:2}]}]}]),true);
+assert.equal(hasUsbOutput([{outputReports:[{reportId:49}]}]),false);
+const sent=[];let unblock;
+const writer=new LatestWriter({sendReport:async(id,data)=>{sent.push([id,data[10]]);if(sent.length===1)await new Promise(r=>unblock=r);}});
+const first=writer.put(on);writer.put(on);writer.put(off);unblock();assert.equal(await first,true);
+assert.deepEqual(sent,[[2,1],[2,0]]);
+let errors=0;const bad=new LatestWriter({sendReport:async()=>{throw Error('unplugged');}},()=>errors++);
+assert.equal(await bad.put(on),false);assert.equal(await bad.put(off),false);assert.equal(errors,1);
+console.log('PASS: USB packet, input filtering, strength clamp, latest-write release priority, write failure.');

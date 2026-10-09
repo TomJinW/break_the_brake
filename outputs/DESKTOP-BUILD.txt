@@ -1,0 +1,31 @@
+差一点就断了 · 三版本构建说明
+
+共用游戏源码：outputs/trigger-lab/
+桌面入口：desktop/main.cjs；隔离桥接：desktop/preload.cjs。
+
+开发：npm ci，然后 npm start。
+网页版：npm run build:web
+macOS Apple Silicon：npm run build:mac
+Windows x64：npm run build:win
+全部构建：npm run build:all
+产物位于 outputs/releases/。
+
+网页版 ZIP：解压后把 web/ 内容部署到 HTTPS 静态站点；也可以使用 localhost HTTP 服务。不要双击 HTML 文件。
+macOS arm64：DMG 拖到 Applications，或解压 ZIP 运行应用。仅适用于 Apple Silicon。
+Windows x64：解压整个 ZIP，再运行其中的 EXE；不要只复制 EXE 文件。
+
+当前为未签名的测试版本，没有自动更新。正式公开发行前需要分别配置开发者签名；macOS 还需公证。
+macOS 与 Windows 使用各自的本地成绩和设置；不会自动导入浏览器成绩。
+
+DualSense 使用 USB 数据线连接普通 DualSense；专用力反馈仍基于现有 USB 协议。
+桌面版内置 Chromium，不再需要额外安装 Chrome。点击专用连接时匹配支持的手柄；存在多只手柄时提供选择。
+普通手柄仍使用 Gamepad API。不同系统的震动、映射与设备驱动需要实机验证。
+关闭窗口时会先请求释放震动和阻力，最多等待 1.5 秒再退出。
+桌面成绩图片使用系统“另存为”窗口；取消不会写文件。
+菜单“游戏 → 全屏”可切换全屏。
+
+打包配置保留网页版，桌面版的专用桥接只提供保存图片和退出释放事件，不开放通用文件系统或命令执行。
+
+验证状态（2026-10-09）：三个 ZIP 完整性通过；macOS arm64 应用已实机启动、完成倒计时进入驾驶并暂停。Windows 已检查二进制为 x64，尚未进行 Windows 实机测试。手柄输出和系统保存对话框仍需实测。
+
+0.1.1：踏板耐久翻倍（单位时间损伤由原来的 55 系数降至 27.5），危险阈值仍为 86%，松开不会恢复耐久。

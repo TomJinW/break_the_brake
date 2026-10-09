@@ -1,0 +1,45 @@
+{
+  "name": "almost-broken",
+  "version": "0.1.2",
+  "description": "差一点就断了 — MPV 刹停挑战",
+  "author": "Almost Broken",
+  "private": true,
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "build:web": "node scripts/build-web.cjs",
+    "build:mac": "electron-builder --mac dmg zip --arm64",
+    "build:win": "electron-builder --win zip --x64",
+    "build:all": "npm run build:web && npm run build:mac && npm run build:win",
+    "test": "node --test desktop/*.test.cjs tests/*.test.mjs",
+    "test:web": "node --test tests/*.test.mjs"
+  },
+  "devDependencies": {
+    "electron": "44.7.0",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "game.almostbroken.desktop",
+    "productName": "差一点就断了",
+    "directories": {
+      "output": "outputs/releases"
+    },
+    "files": [
+      "desktop/*.cjs",
+      "!desktop/*.test.cjs",
+      "outputs/trigger-lab/*.html",
+      "outputs/trigger-lab/*.css",
+      "outputs/trigger-lab/*.mjs",
+      "outputs/trigger-lab/lab/**/*",
+      "package.json"
+    ],
+    "artifactName": "Almost-Broken-${version}-${os}-${arch}.${ext}",
+    "mac": {
+      "category": "public.app-category.games",
+      "identity": null
+    },
+    "win": {
+      "signAndEditExecutable": false
+    }
+  }
+}

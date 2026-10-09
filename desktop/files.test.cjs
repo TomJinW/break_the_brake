@@ -1,0 +1,3 @@
+const {test}=require('node:test'),assert=require('node:assert/strict');const {assetPath,pngPayload}=require('./files.cjs');
+test('only serves game assets from the local origin',()=>{assert.equal(assetPath('/game','brake://game/index.html'),'/game/index.html');assert.equal(assetPath('/game','brake://game/lab/'),'/game/lab/index.html');for(const url of ['brake://other/index.html','https://game/index.html','brake://game/desktop/main.cjs','brake://game/%2e%2e%2fsecret.html','brake://game/package.json'])assert.equal(assetPath('/game',url),null);});
+test('rejects malformed screenshot payloads',()=>{for(const value of [null,'abc','data:image/png;base64,YWJj'])assert.throws(()=>pngPayload(value));assert.equal(pngPayload('data:image/png;base64,iVBORw0KGgo=').length,8);});
