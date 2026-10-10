@@ -54,3 +54,31 @@ test('result menus consume Space without activating controls, but retain Enter a
  nav.key({code:'Enter',repeat:false,preventDefault:()=>{}});assert.equal(clicks,1);
  nav.confirm();assert.equal(clicks,2);
 });
+
+test('both standard triggers brake independently and combine by maximum',async()=>{
+ const {defaultBinding,rawInput,mappedInput}=await import('../outputs/trigger-lab/gamepad.mjs');
+ const p={mapping:'standard',axes:[],buttons:Array.from({length:8},()=>({value:0}))},b=defaultBinding(p);
+ assert.equal(b.kind,'triggers');
+ for(const i of [6,7])for(const value of [0,.1,.5,1]){p.buttons[6].value=0;p.buttons[7].value=0;p.buttons[i].value=value;assert.equal(mappedInput(rawInput(p,b),b),value);}
+ p.buttons[6].value=.7;p.buttons[7].value=.6;assert.equal(rawInput(p,b),.7);
+ assert.equal(defaultBinding({...p,mapping:''}),null);
+});
+test('saved legacy and calibrated custom bindings remain unchanged',async()=>{
+ const {resolveBinding,rawInput,mappedInput}=await import('../outputs/trigger-lab/gamepad.mjs');
+ const p={mapping:'standard',axes:[-.5],buttons:Array.from({length:8},()=>({value:0}))};
+ const old={kind:'button',index:7,rest:0,full:1,digital:false};assert.deepEqual(resolveBinding(p,old),old);
+ p.buttons[6].value=1;assert.equal(rawInput(p,resolveBinding(p,old)),0);
+ const custom={kind:'axis',index:0,rest:1,full:-1,digital:true};assert.deepEqual(resolveBinding(p,custom),custom);assert.equal(mappedInput(rawInput(p,custom),custom),.75);
+ const both=resolveBinding(p,null);assert.deepEqual(resolveBinding(p,JSON.parse(JSON.stringify(both))),both);
+});
+test('DualSense USB reads either trigger and writes and releases both effect blocks',async()=>{
+ const {usbInput,usbReport}=await import('../outputs/trigger-lab/protocol.mjs');
+ const d=new DataView(new ArrayBuffer(63));
+ for(const index of [4,5])for(const value of [0,127,255]){d.setUint8(4,0);d.setUint8(5,0);d.setUint8(index,value);assert.equal(usbInput(1,d),value/255);}
+ d.setUint8(4,180);d.setUint8(5,90);assert.equal(usbInput(1,d),180/255);
+ assert.equal(usbInput(2,d),null);assert.equal(usbInput(1,new DataView(new ArrayBuffer(9))),null);
+ const active=usbReport({active:true,start:.12,strength:.85,rumble:.4});assert.equal(active.length,47);assert.equal(active[0],15);
+ for(const offset of [10,21])assert.deepEqual([...active.slice(offset,offset+3)],[1,31,217]);
+ assert.deepEqual([...active.slice(10,21)],[...active.slice(21,32)]);
+ const released=usbReport();assert.equal(released[0],15);assert.ok(released.slice(2).every(v=>v===0));
+});

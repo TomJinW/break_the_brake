@@ -1,6 +1,6 @@
-export function rawInput(pad,binding){if(!pad||!binding)return 0;return binding.kind==='axis'?(pad.axes[binding.index]??0):(pad.buttons[binding.index]?.value??0);}
+export function rawInput(pad,binding){if(!pad||!binding)return 0;if(binding.kind==='triggers')return Math.max(pad.buttons[6]?.value??0,pad.buttons[7]?.value??0);return binding.kind==='axis'?(pad.axes[binding.index]??0):(pad.buttons[binding.index]?.value??0);}
 export function mappedInput(raw,binding){if(!binding||!Number.isFinite(raw)||Math.abs(binding.full-binding.rest)<.1)return 0;const v=Math.max(0,Math.min(1,(raw-binding.rest)/(binding.full-binding.rest)));return v<.02?0:v;}
-export function defaultBinding(pad){return pad.mapping==='standard'&&pad.buttons.length>7?{kind:'button',index:7,rest:0,full:1,digital:false}:null;}
+export function defaultBinding(pad){return pad.mapping==='standard'&&pad.buttons.length>7?{kind:'triggers',index:0,rest:0,full:1,digital:false}:null;}
 export function actuator(pad){
  const candidates=[pad?.vibrationActuator,...Array.from(pad?.hapticActuators||[])];
  return candidates.find(a=>a&&((typeof a.playEffect==='function'&&(!a.effects||Array.from(a.effects).includes('dual-rumble')))||typeof a.pulse==='function'))||null;
@@ -18,4 +18,11 @@ export class Rumble {
   }catch(e){failed(e);}
  }
  stop(){this.next=0;const a=actuator(this.pad);if(a)try{Promise.resolve(a.reset?a.reset():typeof a.pulse==='function'?a.pulse(0,1):a.playEffect('dual-rumble',{duration:1,strongMagnitude:0,weakMagnitude:0})).catch(()=>{});}catch{}}
+}
+
+// Existing single-input mappings, including legacy RT defaults, remain unchanged.
+export function resolveBinding(p,saved){
+ if(saved&&['axis','button'].includes(saved.kind)&&Number.isInteger(saved.index)&&saved.index>=0&&saved.index<(saved.kind==='axis'?p.axes.length:p.buttons.length)&&Number.isFinite(saved.rest)&&Number.isFinite(saved.full))return saved;
+ if(saved?.kind==='triggers')return defaultBinding(p);
+ return defaultBinding(p);
 }
