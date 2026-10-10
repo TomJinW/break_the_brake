@@ -114,3 +114,6 @@ function frame(now){
 updateUI();log('实验室已就绪');
 if(!supported)notice('当前浏览器不支持 WebHID。请在桌面 Chrome / Edge 中打开此 localhost 地址；也可先看演示。');
 requestAnimationFrame(frame);
+
+// Keep native long-press menus and text selection off game buttons.
+for(const eventName of ['contextmenu','selectstart'])document.addEventListener(eventName,event=>{if(event.target?.closest?.('button'))event.preventDefault();});

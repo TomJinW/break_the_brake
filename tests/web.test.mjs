@@ -42,3 +42,15 @@ test('replay remains bounded and has no findLast dependency',()=>{
  const old=globalThis.document;globalThis.document={createElement:()=>({getContext:()=>({drawImage(){}})})};
  try{const r=new BrakeReplay();for(let i=0;i<1000;i++)r.capture({width:1000,height:540},i/10,.4);assert.ok(r.frames.length<=31);r.frames.findLast=undefined;assert.equal(r.draw({getContext:()=>({drawImage(){}})},.1),.4);r.reset();assert.equal(r.frames.length,0);}finally{globalThis.document=old;}
 });
+
+
+test('result menus consume Space without activating controls, but retain Enter and controller confirmation', async()=>{
+ const {MenuNavigation}=await import('../outputs/trigger-lab/menu-navigation.mjs');
+ const nav=new MenuNavigation({source:()=>({}),back:()=>{},pause:()=>{}});
+ nav.sync=()=>{};nav.modal={id:'result'};
+ let clicks=0,prevented=0;nav.focused={tagName:'BUTTON',click:()=>clicks++};
+ for(const repeat of [false,true])nav.key({code:'Space',repeat,preventDefault:()=>prevented++});
+ assert.equal(clicks,0);assert.equal(prevented,2);
+ nav.key({code:'Enter',repeat:false,preventDefault:()=>{}});assert.equal(clicks,1);
+ nav.confirm();assert.equal(clicks,2);
+});
